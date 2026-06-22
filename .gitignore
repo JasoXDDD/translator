@@ -1,0 +1,21 @@
+# Local secrets and machine-specific environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Generated media and outputs
+*.mp3
+*.mp4
+*_burned.*
+*_subtitled.*
+translated.vtt
+keywords.json

@@ -1,0 +1,15 @@
+{
+  "model": "deepseek-v4-flash",
+  "temperature": 0.7,
+  "max_tokens": 10000,
+  "api_key_env": "DEEPSEEK_API_KEY",
+  "base_url": "https://api.deepseek.com",
+  "keywords_output_path": "keywords.json",
+  "translation_target_language": "English",
+  "translation_output_path": "translated.vtt",
+  "transcription_model": "whisper-v3-turbo",
+  "system_message": "You are a helpful extraction assistant.",
+  "prompt_template": "You are an extraction assistant. Read the provided text and extract the most important keywords or short phrases. For each extracted keyword, include a short `info` field describing the relevant information found in the text about that keyword. Return ONLY valid JSON: a top-level array of objects, each object containing at least the keys `keyword` and `info`. Example output format:\n[ {\n  \"keyword\": \"Topic A\",\n  \"info\": \"Relevant details about Topic A extracted from the text.\"\n}, ... ]\nDo not add any extra prose or explanation outside the JSON.\n\nTEXT:\n{text}",
+  "translation_system_message": "You are a careful subtitle translator.",
+  "translation_prompt_template": "Translate the WEBVTT subtitles into {target_language}.\nPreserve the WEBVTT format exactly: keep cue timings, cue identifiers, blank lines, NOTE/STYLE/REGION blocks, and tags. Translate only human readable subtitle text.\n\nUse this keyword context where relevant. Keep translations consistent with the provided meanings:\n{keyword_context}\n\nReturn ONLY the translated WEBVTT file content, with no explanation.\n\nWEBVTT INPUT:\n{vtt_text}"
+}
