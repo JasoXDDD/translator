@@ -68,10 +68,12 @@ or by `--target-language`.
 ## Media Utilities
 
 Download a video with `yt-dlp`. Running without arguments prompts for the link
-and expected video format:
+and optional video format. Leave the format blank to use yt-dlp's default file
+mode:
 
 ```bash
 python video_downloader.py
+python video_downloader.py "https://example.com/video"
 python video_downloader.py "https://example.com/video" --format mp4
 ```
 

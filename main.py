@@ -26,7 +26,7 @@ def _pause() -> None:
 def _run_video_downloader() -> None:
     print("\nDownload Video")
     url = input("Video link: ").strip()
-    video_format = input("Expected video format (mp4, mkv, or webm): ").strip()
+    video_format = input("Expected video format (mp4, mkv, webm, or blank for default): ").strip()
     video_downloader.main(url, video_format)
 
 
