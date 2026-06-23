@@ -103,7 +103,9 @@ python subtitle_generator.py audio.mp3 --output subtitles.vtt
 
 Add subtitles to a video with `ffmpeg`. By default this embeds a selectable
 subtitle track and saves the result beside the source video with `_subtitled`
-appended to the filename:
+appended to the filename. Burn-in mode detects VTT color cue classes such as
+`<c.colorFEFEFE>` and renders them with the matching colors from the VTT
+`Style:` block:
 
 ```bash
 python subtitle_integrator.py video.mp4 subtitles.vtt
