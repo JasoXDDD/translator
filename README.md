@@ -1,4 +1,4 @@
-# translator: Keywords Extractor
+# Translator: Keywords Extractor
 
 This module reads a plain text file and sends it to an OpenAI-style LLM to
 extract important keywords and relevant information. The LLM is asked to
