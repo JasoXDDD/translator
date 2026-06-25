@@ -8,6 +8,7 @@ from keyword_extractor import load_config
 
 class LoadConfigTests(unittest.TestCase):
     def test_uses_environment_overrides(self):
+        """Check that environment variables override JSON config values."""
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as config_file:
             json.dump({"model": "from-file", "max_tokens": 123}, config_file)
             config_path = config_file.name
@@ -36,6 +37,7 @@ class LoadConfigTests(unittest.TestCase):
             os.unlink(config_path)
 
     def test_keeps_api_key_as_environment_variable_name(self):
+        """Check that the config points to an env var instead of storing a secret."""
         config = load_config()
 
         self.assertEqual(config["api_key_env"], "DEEPSEEK_API_KEY")

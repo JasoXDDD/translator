@@ -5,6 +5,7 @@ from vtt_translator import find_keywords_in_vtt, format_keyword_context
 
 class KeywordContextTests(unittest.TestCase):
     def test_finds_matching_keywords_case_insensitively(self):
+        """Check that VTT keyword matching ignores letter casing."""
         keywords = [
             {"keyword": "DeepSeek", "info": "LLM provider"},
             {"keyword": "missing", "info": "Should not match"},
@@ -15,6 +16,7 @@ class KeywordContextTests(unittest.TestCase):
         self.assertEqual(matches, [{"keyword": "DeepSeek", "info": "LLM provider"}])
 
     def test_formats_empty_context(self):
+        """Check that empty keyword matches produce a clear fallback message."""
         self.assertEqual(format_keyword_context([]), "No stored keywords were found in this VTT file.")
 
 
