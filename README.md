@@ -1,143 +1,200 @@
-# Translator: Keywords Extractor
+# Translator Utilities
 
-This module reads a plain text file and sends it to an OpenAI-style LLM to
-extract important keywords and relevant information. The LLM is asked to
-respond with parseable JSON: an array of objects with `keyword` and `info`.
+This repository is a small command-line toolkit for downloading media,
+extracting or generating subtitles, extracting keyword context with an
+OpenAI-compatible chat model, and translating WebVTT subtitles with that
+context.
 
-Quickstart
+The project is intentionally script-friendly: the Python modules live in
+`src/`, configuration stays at the repository root, and tests live in `tests/`.
 
-1. Install dependencies:
+## Directory Overview
 
-```bash
-python -m pip install -r translator/requirements.txt
+```text
+.
+├── .github/workflows/ci.yml       GitHub Actions workflow for compile and unit tests
+├── src/                           Application modules and CLI entry points
+├── tests/                         Unit tests and the CI-friendly test runner
+├── keyword_extractor_config.json  Default non-secret model and workflow settings
+├── requirements.txt               Python dependencies
+├── .env.example                   Example local environment variables
+└── README.md                      Project overview and usage notes
 ```
 
-2. Set your API key in your environment:
+## Source Modules
+
+`src/main.py` is the interactive menu launcher for the whole toolkit. It
+connects the individual utilities into one prompt-driven workflow.
+
+`src/video_downloader.py` downloads videos with `yt-dlp`.
+
+`src/vtt_downloader.py` downloads WebVTT subtitles from a video link with
+`yt-dlp`.
+
+`src/audio_extractor.py` extracts audio from a local video file with `ffmpeg`.
+
+`src/subtitle_generator.py` generates WebVTT subtitles from audio using the
+configured OpenAI transcription model.
+
+`src/keyword_extractor.py` reads text, sends it to an OpenAI-compatible chat
+model, parses keyword JSON, and saves the result.
+
+`src/configure_keyword_extractor.py` edits the shared JSON configuration
+interactively.
+
+`src/vtt_translator.py` translates WebVTT files with keyword context while
+preserving cue structure.
+
+`src/subtitle_integrator.py` embeds subtitles as a selectable track or burns
+them into a video with `ffmpeg`.
+
+`src/__init__.py` exposes the core keyword extraction helpers for package-style
+imports.
+
+## Setup
+
+Install Python dependencies from the repository root:
 
 ```bash
-$env:DEEPSEEK_API_KEY="your_api_key_here"  # Windows PowerShell
-export DEEPSEEK_API_KEY="your_api_key_here"  # macOS / Linux shell
+python -m pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` if you prefer keeping local environment values
-in a file. `.env` is ignored by Git; never commit real API keys.
+For media commands, also install these command-line tools and make sure they
+are available on `PATH`:
 
-3. Run the extractor from Python:
+```text
+yt-dlp
+ffmpeg
+```
+
+Set the API key expected by `keyword_extractor_config.json`. The default config
+uses `DEEPSEEK_API_KEY`.
+
+```powershell
+$env:DEEPSEEK_API_KEY="your_api_key_here"
+```
+
+```bash
+export DEEPSEEK_API_KEY="your_api_key_here"
+```
+
+You can copy `.env.example` to `.env` for local notes, but the scripts read
+environment variables from the shell. Do not commit real API keys.
+
+## Common Workflows
+
+Start the interactive menu:
+
+```bash
+python src/main.py
+```
+
+Download a video:
+
+```bash
+python src/video_downloader.py "https://example.com/video"
+python src/video_downloader.py "https://example.com/video" --format mp4
+```
+
+Download subtitles:
+
+```bash
+python src/vtt_downloader.py "https://example.com/video" --language en
+python src/vtt_downloader.py "https://example.com/video" --language en --auto-subs
+```
+
+Extract audio:
+
+```bash
+python src/audio_extractor.py video.mp4 --format mp3
+```
+
+Generate subtitles from audio:
+
+```bash
+python src/subtitle_generator.py audio.mp3 --output subtitles.vtt
+```
+
+Extract keyword context from text:
+
+```bash
+python src/keyword_extractor.py notes.txt --output keywords.json
+```
+
+Translate a VTT file with keyword context:
+
+```bash
+python src/vtt_translator.py captions.vtt --keywords keywords.json --output translated.vtt
+```
+
+Add subtitles to a video:
+
+```bash
+python src/subtitle_integrator.py video.mp4 subtitles.vtt --output subtitled.mp4
+python src/subtitle_integrator.py video.mp4 subtitles.vtt --burn-in
+```
+
+## Configuration
+
+Shared settings live in `keyword_extractor_config.json`. The config controls
+the chat model, transcription model, temperature, token limit, API key
+environment variable name, output paths, translation target language, and prompt
+templates.
+
+Edit the config interactively:
+
+```bash
+python src/configure_keyword_extractor.py
+```
+
+Non-secret config values can also be overridden with environment variables:
+
+```text
+TRANSLATOR_MODEL
+TRANSLATOR_TEMPERATURE
+TRANSLATOR_MAX_TOKENS
+TRANSLATOR_API_KEY_ENV
+TRANSLATOR_BASE_URL
+TRANSLATOR_KEYWORDS_OUTPUT_PATH
+TRANSLATOR_TARGET_LANGUAGE
+TRANSLATOR_TRANSLATION_OUTPUT_PATH
+TRANSLATOR_TRANSCRIPTION_MODEL
+```
+
+## Importing Helpers
+
+The `src` directory can be added to `PYTHONPATH` for direct module imports:
 
 ```python
-from translator import extract_keywords_from_file
-results = extract_keywords_from_file('notes.txt')
-print(results)
+from keyword_extractor import extract_keywords_from_file
+
+results = extract_keywords_from_file("notes.txt")
 ```
 
-Or run as a script:
+You can also import the convenience package when the repository root is on
+`PYTHONPATH`:
+
+```python
+from src import extract_keywords_from_file
+
+results = extract_keywords_from_file("notes.txt")
+```
+
+## Tests and CI
+
+Run the unit tests with progress output:
 
 ```bash
-python keyword_extractor.py notes.txt
+python tests/run_with_progress.py
 ```
 
-The extracted keywords are saved to the configured `keywords_output_path`
-(`keywords.json` by default). You can override it per run:
+Compile all Python files:
 
 ```bash
-python keyword_extractor.py notes.txt --output my_keywords.json
+python -m compileall -q .
 ```
 
-4. Edit the request configuration:
-
-```bash
-python configure_keyword_extractor.py
-```
-
-The extractor loads request settings from `keyword_extractor_config.json` by
-default. You can point either program at another config file with `--config`.
-The config stores the name of the API key environment variable
-(`DEEPSEEK_API_KEY` by default), not the secret value itself.
-
-5. Translate a VTT file using the stored keyword context:
-
-```bash
-python vtt_translator.py captions.vtt --keywords keywords.json --output translated.vtt
-```
-
-The translator reads the VTT file, finds keywords that appear in it, sends those
-keyword notes along with the VTT to the LLM, and saves the returned VTT text.
-The target language is controlled by `translation_target_language` in the config
-or by `--target-language`.
-
-## Media Utilities
-
-Download a video with `yt-dlp`. Running without arguments prompts for the link
-and optional video format. Leave the format blank to use yt-dlp's default file
-mode:
-
-```bash
-python video_downloader.py
-python video_downloader.py "https://example.com/video"
-python video_downloader.py "https://example.com/video" --format mp4
-```
-
-Download WebVTT subtitles directly from a video link:
-
-```bash
-python vtt_downloader.py
-python vtt_downloader.py "https://example.com/video" --language en
-python vtt_downloader.py "https://example.com/video" --language en --auto-subs
-```
-
-Extract audio from a video with `ffmpeg`. The output is saved beside the video
-using the requested audio extension:
-
-```bash
-python audio_extractor.py
-python audio_extractor.py video.mp4 --format mp3
-```
-
-Generate WebVTT subtitles from an audio file using the OpenAI transcription
-model configured by `transcription_model`:
-
-```bash
-python subtitle_generator.py
-python subtitle_generator.py audio.mp3 --output subtitles.vtt
-```
-
-Add subtitles to a video with `ffmpeg`. By default this embeds a selectable
-subtitle track and saves the result beside the source video with `_subtitled`
-appended to the filename. Burn-in mode detects VTT color cue classes such as
-`<c.colorFEFEFE>` and renders them with the matching colors from the VTT
-`Style:` block:
-
-```bash
-python subtitle_integrator.py video.mp4 subtitles.vtt
-python subtitle_integrator.py video.mp4 subtitles.vtt --output subtitled.mp4
-python subtitle_integrator.py video.mp4 subtitles.vtt --burn-in
-```
-
-Notes
-- The code expects the `openai` Python package and an OpenAI-compatible API key.
-- `video_downloader.py` requires `yt-dlp`. Install Python dependencies with
-  `python -m pip install -r requirements.txt`.
-- `video_downloader.py`, `audio_extractor.py`, and `subtitle_integrator.py`
-  require `ffmpeg` installed and available on `PATH`.
-- Request settings such as `model`, `temperature`, `max_tokens`,
-  `system_message`, `prompt_template`, keyword output, and VTT translation
-  settings live in the JSON config file.
-- Non-secret config values can also be overridden with environment variables:
-  `TRANSLATOR_MODEL`, `TRANSLATOR_TEMPERATURE`, `TRANSLATOR_MAX_TOKENS`,
-  `TRANSLATOR_API_KEY_ENV`, `TRANSLATOR_BASE_URL`,
-  `TRANSLATOR_KEYWORDS_OUTPUT_PATH`, `TRANSLATOR_TARGET_LANGUAGE`,
-  `TRANSLATOR_TRANSLATION_OUTPUT_PATH`, and `TRANSLATOR_TRANSCRIPTION_MODEL`.
-- The module attempts to parse JSON out of the model's response; if parsing
-  fails it will return the raw response content for troubleshooting.
-
-## GitHub CI
-
-This repo includes `.github/workflows/ci.yml`. On pushes and pull requests to
-`main`, GitHub Actions installs dependencies, compiles the Python files, and
-runs the unit tests.
-
-The CI workflow does not call the external LLM API, so it does not need your
-API key. If you later add integration tests that do call the API, add
-`DEEPSEEK_API_KEY` under GitHub repository settings:
-
-Settings -> Secrets and variables -> Actions -> New repository secret.
+The GitHub Actions workflow in `.github/workflows/ci.yml` installs
+dependencies, compiles the repository, and runs the unit tests on pushes and
+pull requests to `main`. The tests do not call external LLM APIs, so CI does
+not need an API key unless future integration tests add live API calls.
